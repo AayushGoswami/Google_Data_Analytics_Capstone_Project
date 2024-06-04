@@ -1,0 +1,324 @@
+---
+title: "**Google Data Analytics Capstone Project (Cyclistic Rider Data Analysis 2019)**"
+author: "Aayush Goswami"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# **Introduction**
+### *Scenario*
+The Candidate (i.e. Me,) is a junior data analyst working on the marketing analyst team at Cyclistic, a bike-share company in Chicago. The director of marketing, Lily Moreno, believes the company’s future success depends on maximizing the number of annual memberships. Therefore, your team wants to understand how casual riders and annual members use Cyclistic bikes differently. From these insights, your team will design a new marketing strategy to convert casual riders into annual members. But first, Cyclistic executives must approve your recommendations, so they must be backed up with compelling data insights and professional data visualizations.
+
+### *About the Company*
+![](logo2.png)  
+In 2016, Cyclistic launched a successful bike-share offering. Since then, the program has grown to a fleet of 5,824 bicycles that are geotracked and locked into a network of 692 stations across Chicago. The bikes can be unlocked from one station and returned to any other station in the system anytime.
+
+Until now, Cyclistic’s marketing strategy relied on building general awareness and appealing to broad consumer segments. One approach that helped make these things possible was the flexibility of its pricing plans: single-ride passes, full-day passes, and annual memberships. Customers who purchase single-ride or full-day passes are referred to as casual riders. Customers who purchase annual memberships are Cyclistic members.
+
+Cyclistic’s finance analysts have concluded that annual members are much more profitable
+than casual riders. Although the pricing flexibility helps Cyclistic attract more customers, Moreno believes that maximizing the number of annual members will be key to future growth. Rather than creating a marketing campaign that targets all-new customers, Moreno believes there is a solid opportunity to convert casual riders into members. She notes that casual riders are already aware of the Cyclistic program and have chosen Cyclistic for their mobility needs.
+
+Moreno has set a clear goal: Design marketing strategies aimed at converting casual riders into annual members. In order to do that, however, the team needs to better understand how annual members and casual riders differ, why casual riders would buy a membership, and how digital media could affect their marketing tactics. Moreno and her team are interested in analyzing the Cyclistic historical bike trip data to identify trends.
+
+# **The Business Task in Hand**
+The three questions that are needed to be answered for guiding the future marketing program are:  
+1. How do annual members and casual riders use Cyclistic bikes differently?  
+2. Why would casual riders buy Cyclisticc annual memberships?  
+3. How can Cyclistic use digital media to influence casual riders to become members?  
+
+Moreno has assigned the Candidate the first question to answer: How do annual members and casual riders use Cyclistic bikes differently?  
+
+### *Key Stakeholders are:*
+- Cyclistic  
+- Lily Moreno (the Candidate's Manager)  
+- Cyclistic marketing analytics team  
+- Cyclistic executive team
+
+# **Data Sources Used**
+For the required analysis, we have used the Cyclistic's historical trip data [from here](https://divvy-tripdata.s3.amazonaws.com/index.html).  
+We have downloaded the ride data for the year 2019. The files we downloaded are namely:  
+1. Divvy_Trips_2019_Q1.zip  
+2. Divvy_Trips_2019_Q2.zip  
+3. Divvy_Trips_2019_Q3.zip  
+4. Divvy_Trips_2019_Q4.zip  
+
+##### *Further processes, i.e. __Preparation, Processing, Analysis and Visualization__ of the Ride data is done using __R__ language*
+
+# **Prepare, Process, Analyze and Visualize the data using R in RStudio**
+All the required steps carried out for addressing the given business task are as follows.  
+
+## **_PREPARE_**
+### Install and Load required packages
+The required packages to be loaded are _tidyverse, lubridate, ggplot2, readr, dplyr and conflicted_.
+
+```{r eval=FALSE}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(conflicted)
+conflict_prefer("filter", "dplyr")
+conflict_prefer("lag", "dplyr")
+```
+### Load the data
+The downloaded .csv files are loaded into the RStudio environment under 4 data frames namely _**q1_19, q2_19, q3_19**_ and _**q4_19**_.
+
+```{r eval=FALSE}
+q1_19 <- read.csv("2019_Q1.csv")
+q2_19 <- read.csv("2019_Q2.csv")
+q3_19 <- read.csv("2019_Q3.csv")
+q4_19 <- read.csv("2019_Q4.csv")
+```
+### View the data frames
+View the data frames to check for consistency among all of them.
+```{r eval=FALSE}
+View(q1_19)
+View(q2_19)
+View(q3_19)
+View(q4_19)
+```
+## **_PROCESS_**
+### Compare the column names of all the data frames
+```{r eval=FALSE}
+colnames(q1_19)
+colnames(q2_19)
+colnames(q3_19)
+colnames(q4_19)
+```
+Here we find that some of the columns of the q2_19 data frame have different name from that of the other data frames having similar type of data in it.  
+
+### Renaming of column names of q2_19 to maintain consistency  
+We now rename the columns of q2_19 data to maintain consistency among all the data frames.
+```{r eval=FALSE}
+q2_19 <- q2_19 %>%
+  rename(trip_id = X01...Rental.Details.Rental.ID,
+  start_time = X01...Rental.Details.Local.Start.Time,
+  end_time = X01...Rental.Details.Local.End.Time, 
+  bikeid = X01...Rental.Details.Bike.ID,
+  tripduration = X01...Rental.Details.Duration.In.Seconds.Uncapped,
+  from_station_id = X03...Rental.Start.Station.ID,
+  from_station_name = X03...Rental.Start.Station.Name,
+  to_station_id = X02...Rental.End.Station.ID,
+  to_station_name = X02...Rental.End.Station.Name,
+  usertype = User.Type,
+  gender = Member.Gender,
+  birthyear = X05...Member.Details.Member.Birthday.Year)
+```
+
+### Append all the 4 quarter trip datasets to new big yearly (2019) trip data frame named ___trip_data_2019___
+Now we append all the four quarterly data into a single big yearly ride data for the year 2019.  
+```{r eval=FALSE}
+trip_data_2019 <- rbind(q1_19,q2_19,q3_19,q4_19)
+View(trip_data_2019)
+```
+### Remove the columns with the values that we don't need or may have some inconsistency and can be created later through calculations.
+```{r eval=FALSE}
+trip_data_2019 <- trip_data_2019 %>% 
+  select(-c(gender,tripduration,birthyear))
+```
+### Inspect the new data frame that has been created
+```{r eval=FALSE}
+colnames(trip_data_2019)
+nrow(trip_data_2019)
+dim(trip_data_2019)
+head(trip_data_2019)
+tail(trip_data_2019)
+str(trip_data_2019)
+summary(trip_data_2019)
+table(trip_data_2019$usertype)
+table(trip_data_2019_v2$from_station_name)
+table(trip_data_2019_v2$to_station_name)
+```
+### Perform Required Transformations for Analysis
+#### Add a _**date**_ column of format _yyyy-mm-dd_
+```{r eval=FALSE}
+trip_data_2019$date <- as.Date(trip_data_2019$start_time)
+```
+#### Add a _**month**_, _**day**_ and _**day_of_week**_ column
+```{r eval=FALSE}
+trip_data_2019$month <- format(as.Date(trip_data_2019$date), "%m")
+trip_data_2019$day <- format(as.Date(trip_data_2019$date), "%d")
+trip_data_2019$day_of_week <- format(as.Date(trip_data_2019$date), "%A")
+```
+#### Add a _**trip_duration**_ column by calculation
+```{r eval=FALSE}
+trip_data_2019$trip_duration <- difftime(trip_data_2019$end_time,trip_data_2019$start_time)
+```
+Here, we can see that the values in the _trip_duration_ column is of _**difftime**_ data type. We need to change it to ___numeric___ data type so that we can use that values of this column for the calculations in the further analyses.  
+```{r eval=FALSE}
+trip_data_2019$trip_duration <- as.numeric(as.character(trip_data_2019$trip_duration))
+
+is.numeric(trip_data_2019$trip_duration)
+```
+### Clean the "bad data" from the data frame
+In the data frame, we can observe that there are many trip_duration value which are __less than 0__. Also there are some ride data in which the ___starting station or the ending station are some testing station, servicing station or repair station.___ These kind of trip data should not be considered for the analysis as it can hamper the integrity of the data. We need to ___clean these data from the data frame.___ Following are the codes applied to carry out the required cleaning and store the cleaned data in a new data frame named as ___trip_data_2019_v2___.  
+```{r eval=FALSE}
+trip_data_2019_v2 <- trip_data_2019[!(trip_data_2019$trip_duration < 0),]
+
+trip_data_2019_v2 <- trip_data_2019_v2[!(trip_data_2019_v2$to_station_name == "HUBBARD ST BIKE CHECKING (LBS-WH-TEST)" | trip_data_2019_v2$to_station_name == "DIVVY Map Frame B/C Station" | trip_data_2019_v2$to_station_name == "DIVVY CASSETTE REPAIR MOBILE STATION" | trip_data_2019_v2$to_station_name == "TS ~ DIVVY PARTS TESTING"),]
+
+trip_data_2019_v2 <- trip_data_2019_v2[!(trip_data_2019_v2$from_station_name == "HUBBARD ST BIKE CHECKING (LBS-WH-TEST)" | trip_data_2019_v2$from_station_name == "DIVVY Map Frame B/C Station" | trip_data_2019_v2$from_station_name == "DIVVY CASSETTE REPAIR MOBILE STATION"),]
+
+View(trip_data_2019_v2)
+```
+
+
+## **_ANALYZE_**
+
+Now our data is totally cleaned and ready to be used for analysis. Now we will conduct all the required descriptive analysis by using the cleaned data, i.e. the data frame ___trip_data_2019_v2___.  
+
+### Descriptive analysis on the ___trip_duration___
+#### ___Mean___ of Trip Duration
+```{r eval=FALSE}
+mean(trip_data_2019_v2$trip_duration)
+```
+#### ___Median___ of Trip Duration
+```{r eval=FALSE}
+median(trip_data_2019_v2$trip_duration)
+```
+#### ___Maximum___ of the Trip Duration
+```{r eval=FALSE}
+max(trip_data_2019_v2$trip_duration)
+```
+#### ___Minimum___ of the Trip Duration
+```{r eval=FALSE}
+min(trip_data_2019_v2$trip_duration)
+```
+#### All the above data can be viewed all at once by the ___summary()___ function for the Trip Duration
+```{r eval=FALSE}
+summary(trip_data_2019_v2$trip_duration)
+```
+
+### Compare __Subscribers__ and __Customers__ based on different parameters
+There are two types of users of the Cyclistic bikes:  
+- __Subscriber__: Users who have yearly subscription of Cyclistic.  
+- __Customer__: Users who use the Cyclistic bikes for single ride on a Pay per Ride basis.  
+
+#### ___Average___ Trip Duration
+```{r eval=FALSE}
+aggregate(trip_data_2019_v2$trip_duration ~ trip_data_2019_v2$usertype, FUN = mean)
+```
+
+#### ___Median___ of Trip Duration
+```{r eval=FALSE}
+aggregate(trip_data_2019_v2$trip_duration ~ trip_data_2019_v2$usertype, FUN = median)
+```
+
+#### ___Longest___ Trip Duration
+```{r eval=FALSE}
+aggregate(trip_data_2019_v2$trip_duration ~ trip_data_2019_v2$usertype, FUN = max)
+```
+#### ___Shortest___ Trip Duration
+```{r eval=FALSE}
+aggregate(trip_data_2019_v2$trip_duration ~ trip_data_2019_v2$usertype, FUN = min)
+```
+#### ___Total___ Trip Duration
+```{r eval=FALSE}
+aggregate(trip_data_2019_v2$trip_duration ~ trip_data_2019_v2$day_of_week, FUN = sum)
+```
+#### Trips on each day of the ___Week___
+```{r eval=FALSE}
+aggregate(trip_data_2019_v2$trip_duration ~ trip_data_2019_v2$usertype + trip_data_2019_v2$day_of_week, FUN = mean)
+```
+The days of Week are __out of order__. Lets fix that and view the total number of trips on each day of week again with the days of the week arranged in order from ___Sunday - Saturday___.
+```{r eval=FALSE}
+trip_data_2019_v2$day_of_week <- ordered(trip_data_2019_v2$day_of_week, levels=c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"))
+
+aggregate(trip_data_2019_v2$trip_duration ~ trip_data_2019_v2$usertype + trip_data_2019_v2$day_of_week, FUN = mean)
+```
+#### Other sub-data sets created for further help in analysis
+```{r eval=FALSE}
+total_usertypes <- trip_data_2019_v2 %>% 
+  group_by(usertype) %>% 
+  summarise(total_users = n())
+View(total_usertypes)
+
+total_rides_by_day <- trip_data_2019_v2 %>% 
+  group_by(day_of_week) %>% 
+  summarise(total_rides = n())
+View(total_rides_by_day)
+
+rider_weekday <- trip_data_2019_v2 %>% 
+  group_by(day_of_week, usertype) %>% 
+  summarise(number_of_rides = n(), mean_ride = mean(trip_duration))
+View(rider_weekday)
+```
+
+## **_VISUALIZE_**
+Now, as we are ready with our descriptive analysis over the whole set of data that is provided to us, it is now time to present our analysis in the form of beautiful and eye-catching ___Visualizations___ with help of different types of charts and graphs.  
+
+### ___Total___ number of rides per ___Weekday___
+This is the visualization of the Total number of Rides completed based on each day of the week for the whole year of 2019
+```{r eval=FALSE}
+trip_data_2019_v2 %>% 
+  mutate(weekday = wday(start_time, label = TRUE)) %>% 
+  group_by(usertype, weekday) %>% 
+  summarise(number_of_rides = n(), average_duration = mean(trip_duration)) %>% 
+  arrange(usertype, weekday) %>% 
+  ggplot(aes(x = weekday, y = number_of_rides, fill = usertype)) + geom_col(position = "dodge")
+```
+![](ridesVSweekday_plot_no_modification.png)  
+
+Here we can see that the plot does not look so presentable ___without proper title and labeling of the axes and the legend.___ Also the values of the y-axis are ___truncated.___ Lets fix it with ___aesthetic___ modifications on the plot.
+```{r eval=FALSE}
+trip_data_2019_v2 %>% 
+  mutate(weekday = wday(start_time, label = TRUE)) %>% 
+  group_by(usertype, weekday) %>% 
+  summarise(number_of_rides = n(), average_duration = mean(trip_duration)) %>% 
+  arrange(usertype, weekday) %>% 
+  ggplot(aes(x = weekday, y = number_of_rides, fill = usertype)) + geom_col(position = "dodge") + scale_y_continuous(labels = scales::comma) + labs(x = "Day of Week", y = "Number of Rides", title = "Number of Rides on each day of the Week in 2019") + scale_fill_discrete(name = "Type of User")
+```
+![](Rides VS day of week.png)  
+
+Now, we again create the same visualization but this time it is separated into two different plots on the basis of Type of User, by using the ___facet_wrap___ function:
+```{r eval=FALSE}
+trip_data_2019_v2 %>% 
+  mutate(weekday = wday(start_time, label = TRUE)) %>% 
+  group_by(usertype, weekday) %>% 
+  summarise(number_of_rides = n(), average_duration = mean(trip_duration)) %>% 
+  arrange(usertype, weekday) %>% 
+  ggplot(aes(x = weekday, y = number_of_rides, fill = usertype)) + geom_col(position = "dodge") + scale_y_continuous(labels = scales::comma) + facet_wrap(~usertype) + labs(x = "Day of Week", y = "Number of Rides", title = "Number of Rides on each day of the Week in 2019", subtitle = "Seperated by Type of User") + scale_fill_discrete(name = "Type of User")
+```
+![](rides VS day of week facet usertype.png)  
+
+### ___Average___ Ride duration per ___Weekday___ of each type of __User__
+This is the visualization of the average ride duration on each day of the week for each type of Users.
+```{r eval=FALSE}
+trip_data_2019_v2 %>% 
+  mutate(weekday = wday(start_time, label = TRUE)) %>% 
+  group_by(usertype, weekday) %>% 
+  summarise(number_of_rides = n(), average_duration = mean(trip_duration)) %>% 
+  arrange(usertype, weekday) %>% 
+  ggplot(aes(x = weekday, y = average_duration, fill = usertype)) + geom_col(position = "dodge") + facet_wrap(~usertype) + labs(y = "Average Trip Duration (mins)", x = "Day of Week", title = "Average Trip Duration of Different types of Users in 2019") + scale_fill_discrete(name = "Type of User")
+```
+![](avg trip duration.png)  
+
+### ___Total___ number of Rides ___per Month___ of 2019
+This chart is the visualization of the total number of rides taken by each type of Cyclistic users on each month of the year 2019.
+```{r eval=FALSE}
+trip_data_2019_v2 %>% 
+  mutate(month_name = month(start_time, label = TRUE)) %>% 
+  group_by(usertype, month_name) %>% 
+  summarise(number_of_rides = n(), avg_duration = mean(trip_duration)) %>% 
+  arrange(usertype, month_name) %>% 
+  ggplot() + geom_col(aes(x = month_name, y = number_of_rides, fill = usertype), position = "dodge")  + scale_y_continuous(labels = scales::comma) + labs(x = "Month", y = "Number of Rides", title = "Number of Rides per Month in 2019") + scale_fill_discrete(name = "Type of User")
+```
+![](rides VS month.png)  
+
+### ___Total___ number of Rides ___each hour of the day___ for the whole year of __2019__
+This graph shows that in which hour of every day for the year 2019 did the Cyclistic users use the ride for the most and for the least time, differentiated upon the type of User.
+```{r eval=FALSE}
+trip_data_2019_v2 %>% 
+  mutate(hours = hour(start_time)) %>% 
+  group_by(usertype, hours) %>% 
+  summarise(number_of_rides = n()) %>% 
+  arrange(usertype, hours) %>% 
+  ggplot() + geom_col(aes(x = hours, y = number_of_rides, fill = usertype), position = "dodge") + scale_y_continuous(labels = scales::comma)
+```
+![](ridesVShour2019.png)  
+This is the end of the Visualization part of the Analysis Report.
